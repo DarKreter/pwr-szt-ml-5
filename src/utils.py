@@ -1,6 +1,8 @@
 import numpy as np
 from sklearn import metrics
 from sklearn.metrics import silhouette_score, davies_bouldin_score, rand_score
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
 
 def purity_score(y_true, y_pred):
     contingency_matrix = metrics.cluster.contingency_matrix(y_true, y_pred)
@@ -27,3 +29,42 @@ def print_clustering_metrics(metrics):
     print(f"Davies-Bouldin Index (from clusters): {metrics['davies_bouldin_pred']:.4f}")
     print(f"Rand Index: {metrics['rand_index']:.4f}")
     print(f"Purity score: {metrics['purity']}")
+    
+def plot_clustering(X, y_true, y_pred, cluster_centers):
+    n_true_classes = len(np.unique(y_true))
+    n_clusters = max(np.unique(y_pred)) + 1
+    
+    pca = PCA(n_components=2)
+    X_pca = pca.fit_transform(X)
+    
+    
+    plt.figure(figsize=(12, 5))
+    
+    plt.subplot(1, 2, 1)
+    for i in range(n_true_classes):
+        plt.scatter(X_pca[y_true == i, 0], X_pca[y_true == i, 1],
+                    label=f'True Class {i}')
+    plt.title('True Classes (PCA)')
+    plt.xlabel('PCA1')
+    plt.ylabel('PCA2')
+    plt.legend()
+    
+    plt.subplot(1, 2, 2)
+    for i in range(n_clusters):
+        plt.scatter(X_pca[y_pred == i, 0], X_pca[y_pred == i, 1],
+                    label=f'Cluster {i}')
+
+    if cluster_centers is not None:
+        centers_pca = pca.transform(cluster_centers)
+        plt.scatter(centers_pca[:, 0], centers_pca[:, 1],
+                    c='black', marker='x', s=200, linewidths=3, label='Centroids')
+    else:
+        plt.scatter(X_pca[y_pred == -1, 0], X_pca[y_pred == -1, 1],
+                    label=f'Outlier & noise')
+    plt.title('Clusters (PCA)')
+    plt.xlabel('PCA1')
+    plt.ylabel('PCA2')
+    plt.legend()
+    
+    plt.tight_layout()
+    plt.show()
